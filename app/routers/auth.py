@@ -8,7 +8,7 @@ from firebase_admin import auth
 
 
 cred = credentials.Certificate(
-    "/home/rithanyaa/Documents/cloudpro/FC_drive/backend/firebase/fcstorage-c0cf0-firebase-adminsdk-fbsvc-6fd74faf5f.json"
+    "/home/rithanyaa/Documents/cloudpro/FC_drive/backend/firebase/fcstorage-c0cf0-firebase-adminsdk-fbsvc-a2eb5a49b1.json"
 )
 firebase_admin.initialize_app(cred)
 

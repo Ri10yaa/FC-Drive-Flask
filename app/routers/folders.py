@@ -16,12 +16,12 @@ def create_folder():
         folder_name = data.get('folder_name')
         
         if folder_hiearchy:
-            folder_path = ('/').join(folder_hiearchy)
+            folder_path = '/' + ('/').join(folder_hiearchy)
         else:
             folder_path= None
             
         print(firebase_id)
-        print(folder_hiearchy)
+        print(folder_path)
         print(folder_name)    
         
             
@@ -43,74 +43,76 @@ def create_folder():
 
 # Fetch folder contents
 # Needs folder hiearchy in request body
-@folders_bp.route('/<string:firebase_id>/<string:pathString>',methods=['GET'])
-def fetch_folder_contents(folder_name, firebase_id, pathString):
+@folders_bp.route('/<string:firebase_id>/<path:pathString>',methods=['GET'])
+def fetch_folder_contents(firebase_id, pathString):
+    print("FETCHING PARTICULAR FOLDERS\n")
     try:
         files, folders = [], []
         print("The path string is : ",pathString,"\n")
         from app.models.file import File
         from app.models.folder import Folder
         
-        if pathString is None:
-           folders = Folder.fetch_all_folders(firebase_id=firebase_id) 
-        else:
-            files = File.fetch_files_in_folder(pathString,firebase_id)
-            folders = Folder.fetch_folders_in_folder(pathString,firebase_id)
-            
+        files = File.fetch_files_in_folder("/" + pathString,firebase_id)
         
-        if not files or folders:
+        folders = Folder.fetch_folders_in_folder("/" + pathString,firebase_id)
+        
+    
+        if not files or not folders:
             return jsonify({"msg" : "No contents"}), 200  
-        
+                
         if folders is not None:
-             serialized_folders = [
-            {
-                "id" : folder.id,
-                "folder_name" : folder.folder_name,
-                "path" : folder.path,
-                "created_at" :  folder.created_at.isoformat() if folder.created_at else None
-            }
-            for folder in folders
-        ]
+            serialized_folders = [
+                {
+                    "id" : folder.id,
+                    "folder_name" : folder.folder_name,
+                    "path" : folder.path,
+                    "created_at" :  folder.created_at.isoformat() if folder.created_at else None
+                }
+                for folder in folders
+            ]
         
         if files is not None:
             serialized_files = [
-            {
-                "file_name": file.file_name,
-                "file_type": file.file_type,
-                "file_size": file.file_size,
-                "path": file.path,
-                "accessed_at": file.accessed_at.isoformat() if file.accessed_at else None
-            }
-            for file in files
-        ]
-       
+                {
+                    "file_name": file.file_name,
+                    "file_type": file.file_type,
+                    "file_size": file.file_size,
+                    "path": file.path,
+                    "accessed_at": file.accessed_at.isoformat() if file.accessed_at else None
+                }
+                for file in files
+            ]
+          
+        print(serialized_folders)
         return jsonify({"msg" : "Retrieved folder contents", "files" : serialized_files, "folders" : serialized_folders}), 200
     except Exception as e:
         return jsonify({"msg" : "Failed retrieving folder contents", "error" : "${e}"}),500
     
         
-# @folders_bp.route('/<string:firebase_id>/all',methods=['GET'])    
-# def fetch_all_folders(firebase_id):
-#     try:
-#         from app.models.folder import Folder
-#         folders = Folder.fetch_all_folders(firebase_id=firebase_id)
+@folders_bp.route('/<string:firebase_id>/root',methods=['GET'])    
+def fetch_all_folders(firebase_id):
+    print("FETCHING ALL FOLDERS\n")
+    try:
+        from app.models.folder import Folder
+        folders = Folder.fetch_all_folders(firebase_id=firebase_id)
 
-#         if not folders:
-#             return jsonify({"msg" :"No folders found"}), 200
-#         else:
-#             serialized_folders = [
-#                 {
-#                     "id" : folder.id,
-#                     "folder_name" : folder.folder_name,
-#                     "path" : folder.path,
-#                     "created_at" :  folder.created_at.isoformat() if folder.created_at else None
-#                 }
-#                 for folder in folders
-#             ]
-#             return jsonify({"msg" : "Folders retreived", "folders" : serialized_folders}), 200
-#     except Exception as e:
-#         print("Entered exception\n")
-#         return jsonify({"msg" :"Failed to retrieve all folders","error" : str(e)}), 500
+        if not folders:
+            return jsonify({"msg" :"No folders found"}), 200
+        else:
+            serialized_folders = [
+                {
+                    "id" : folder.id,
+                    "folder_name" : folder.folder_name,
+                    "path" : folder.path,
+                    "created_at" :  folder.created_at.isoformat() if folder.created_at else None
+                }
+                for folder in folders
+            ]
+            print(serialized_folders)
+            return jsonify({"msg" : "Folders retreived", "folders" : serialized_folders}), 200
+    except Exception as e:
+        print("Entered exception\n")
+        return jsonify({"msg" :"Failed to retrieve all folders","error" : str(e)}), 500
     
     
         

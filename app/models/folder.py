@@ -1,7 +1,7 @@
 from requests import Session
 from app import db
 from datetime import datetime
-from sqlalchemy import Column,DateTime
+from sqlalchemy import Column,DateTime, and_
 import pytz
 
 class Folder(db.Model):
@@ -65,13 +65,20 @@ class Folder(db.Model):
             return None
             
     @classmethod
-    def fetch_folders_in_folder(cls, folder_path: str, firebase_id: int):
+    def fetch_folders_in_folder(cls, folder_path, firebase_id):
+        print("Entered fetch fodler folder path : ", folder_path + "/")
         try:
-            folders = cls.query.filter_by(firebase_id=firebase_id,path=folder_path)
-            
+            folders = cls.query.filter(
+            and_(
+                cls.firebase_uid == firebase_id,
+                cls.path.like(f"{folder_path}%")
+            )
+        ).all()
+            print(folders)
             if not folders:
                 return None
             else:
+                
                 return folders
         except Exception as e:
             print(f"Error fetching folders in folder : {e}")

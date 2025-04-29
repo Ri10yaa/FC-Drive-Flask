@@ -1,18 +1,42 @@
-from flask import Flask, request, jsonify, Blueprint, session
+from flask import Flask, request, jsonify, Blueprint, session, send_file
 from flask_cors import CORS
 from app import db
 import os
 import json
-from app.s3_functions import upload_to_s3
+from app.s3_functions import upload_to_s3, download_file_from_s3
 from app import db
 from app.encryption_decryption import decrypt
 
 files_bp = Blueprint('files', __name__)
 CORS(files_bp, supports_credentials=True)
 
+# get file 
+@files_bp.route('/<string:user_id>/get-file/<path:file_key>', methods=['GET'])
+def get_file(user_id,file_key):
+    try:
+        print("fie path : ",user_id+file_key)
+        file_stream = download_file_from_s3(user_id +"/"+ file_key)
+        if file_stream is not None:
+            print("files is fetched")
+        mime_type = 'application/octet-stream'
+        if file_key.lower().endswith(('.png', '.jpg', '.jpeg')):
+            mime_type = 'image/jpeg'
+        elif file_key.lower().endswith('.pdf'):
+            mime_type = 'application/pdf'
+
+        return send_file(
+            file_stream,
+            mimetype=mime_type,
+            as_attachment=False,
+            download_name=file_key
+        )
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 def create_file_path(filename, folder_hiearchy):
     if folder_hiearchy:
-        file_path = "/".join(folder_hiearchy)
+        file_path = "/" + "/".join(folder_hiearchy) + f"/{filename}"
     else:
         file_path = f"/{filename}"
     return file_path

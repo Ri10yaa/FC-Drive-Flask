@@ -2,6 +2,7 @@ from requests import Session
 from app import db
 from datetime import datetime
 import pytz 
+from sqlalchemy import and_
 
 class File(db.Model):
     __tablename__ = 'files'
@@ -77,9 +78,16 @@ class File(db.Model):
             return None
             
     @classmethod
-    def fetch_files_in_folder(cls, folder_path: str, firebase_id: int):
+    def fetch_files_in_folder(cls, folder_path, firebase_id):
         try:
-            files = cls.query.filter_by(firebase_id=firebase_id, path=folder_path)
+            print("Fodler path : ",folder_path)
+            print()
+            files = cls.query.filter(
+            and_(
+                cls.firebase_uid == firebase_id,
+                cls.path.like(f"{folder_path + '/'}%")
+            )
+        ).all()
             
             if not files:
                 return None
